@@ -1,0 +1,104 @@
+---
+import { Picture } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Cover from '../../components/Cover.astro';
+import Reveal from '../../components/Reveal.astro';
+import { projects, type Project } from '../../data/projects';
+import { site } from '../../data/site';
+
+export function getStaticPaths() {
+  return projects.map((p, i) => ({ params: { slug: p.slug }, props: { p, next: projects[(i + 1) % projects.length]! } }));
+}
+const { p, next } = Astro.props as { p: Project; next: Project };
+const url = new URL(`/work/${p.slug}/`, Astro.site).href;
+const siteUrl = new URL('/', Astro.site).href;
+const bare = p.role.replace(/^(Solo|Team · my part): /, '');
+const role = bare.charAt(0).toUpperCase() + bare.slice(1);
+const strip = `strip-${(projects.indexOf(p) % 5) + 1}`;
+const story = [
+  { id: 'problem', h: 'The problem', body: p.problem },
+  { id: 'built', h: 'What I built', body: p.built },
+  { id: 'hard', h: 'What was hard', body: p.hard },
+  { id: 'result', h: 'Result', body: p.result },
+];
+const jsonLd = [{
+  '@type': 'CreativeWork',
+  '@id': `${url}#work`,
+  name: p.headline,
+  description: p.oneLiner,
+  url,
+  dateCreated: p.year,
+  creator: { '@id': `${siteUrl}#person` },
+  keywords: p.stack.join(', '),
+  ...(p.links.github || p.links.live ? { sameAs: [p.links.live, p.links.github].filter(Boolean) } : {}),
+}];
+const description = `${p.oneLiner} ${p.team === 'Team' ? 'A team project; this page says which part was mine.' : 'A solo build by Hardik Bhatia.'}`;
+---
+<Base title={`${p.headline} · ${site.name}`} description={description} og={p.slug} jsonLd={jsonLd}>
+  <article class="wrap proj">
+    <a class="back" href="/#work"><span aria-hidden="true">←</span> All work</a>
+    <header class="proj__head">
+      <p class="proj__event mono">{p.event}</p>
+      <h1 class="proj__title">{p.headline}</h1>
+      <p class="proj__line">{p.oneLiner}</p>
+      <dl class="meta">
+        <div><dt>Role</dt><dd>{role}</dd></div>
+        <div><dt>Team</dt><dd>{p.team === 'Solo' ? 'Solo' : 'Team project'} · <span class="mono">{p.year}</span></dd></div>
+        <div><dt>Stack</dt><dd class="tags">{p.stack.map((s) => <span class="tag">{s}</span>)}</dd></div>
+        <div><dt>Links</dt><dd>
+          {p.links.live && <a href={p.links.live}>Live site<span class="sr-only"> for {p.title}</span> ↗</a>}
+          {p.links.github && <a href={p.links.github}>Source on GitHub<span class="sr-only"> for {p.title}</span> ↗</a>}
+        </dd></div>
+      </dl>
+      {p.credit && (
+        <div class="credit">
+          <p><strong>What was mine.</strong> {p.credit}</p>
+        </div>
+      )}
+    </header>
+
+    <div class={`gallery${p.cover ? '' : ' gallery--cover'}`}>
+      {p.cover ? (
+        <figure class="card lead">
+          <Picture src={p.cover.src} alt={p.cover.alt} formats={['avif', 'webp']} widths={[640, 800, 960, 1280]} sizes="(min-width: 1440px) 1360px, 100vw" loading="eager" fetchpriority="high" />
+        </figure>
+      ) : (
+        <figure class={`card ${strip}`}><Cover title={p.title} stack={p.stack} /></figure>
+      )}
+      {p.gallery.filter((g) => g.src !== p.cover?.src).map((g) => (
+        <figure class="card reveal">
+          <Picture src={g.src} alt={g.alt} formats={['avif', 'webp']} widths={[480, 800, 1280]} sizes="(min-width: 1024px) 50vw, 100vw" />
+          <figcaption>{g.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+
+    <div class="story">
+      {story.map((s) => (
+        <section aria-labelledby={s.id} class="reveal">
+          <h2 id={s.id}>{s.h}</h2>
+          <div class="body">
+            {s.body.map((t) => <p>{t}</p>)}
+            {s.id === 'result' && p.note && <p class="note"><strong>What’s real and what isn’t.</strong> {p.note}</p>}
+          </div>
+        </section>
+      ))}
+      <section aria-labelledby="links" class="reveal">
+        <h2 id="links">Links</h2>
+        <div class="body links">
+          {p.links.live && <a class="pill pill--accent" href={p.links.live}>Open the live site ↗</a>}
+          {p.links.github && <a class="pill" href={p.links.github}>Read the source ↗</a>}
+        </div>
+      </section>
+    </div>
+
+    <a class="card next lift reveal" href={`/work/${next.slug}/`}>
+      <span>
+        <span class="label">Next project</span>
+        <span class="next__title">{next.title} <span aria-hidden="true">→</span></span>
+      </span>
+      <span class="next__line">{next.oneLiner}</span>
+    </a>
+  </article>
+  <Reveal />
+</Base>
