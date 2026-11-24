@@ -1,0 +1,89 @@
+---
+import Section from './Section.astro';
+import github from '../data/github.json';
+import { projects } from '../data/projects';
+import { wins, alsoBuilt, site } from '../data/site';
+
+type Day = { date: string; count: number; level: number };
+const days = github.days as Day[];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Columns are weeks starting on Sunday, like GitHub's own graph.
+const lead = new Date(days[0]!.date + 'T00:00:00Z').getUTCDay();
+const cells: (Day | null)[] = [...Array(lead).fill(null), ...days];
+const weeks: (Day | null)[][] = [];
+for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+let lastLabelAt = -3;
+const labels = weeks.map((w, i) => {
+  const first = w.find((d) => d?.date.endsWith('-01')) ?? (i === 0 ? w.find(Boolean) : undefined);
+  if (!first || i - lastLabelAt < 3) return '';
+  lastLabelAt = i;
+  return MONTHS[Number(first.date.slice(5, 7)) - 1];
+});
+
+const monthly = new Map<string, number>();
+for (const d of days) monthly.set(d.date.slice(0, 7), (monthly.get(d.date.slice(0, 7)) ?? 0) + d.count);
+const monthName = (ym: string) => `${MONTHS[Number(ym.slice(5)) - 1]} ${ym.slice(0, 4)}`;
+const fmt = (iso: string) =>
+  new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const range = `${fmt(days[0]!.date)} to ${fmt(days.at(-1)!.date)}`;
+
+const nums = [
+  { v: String(github.total), k: 'GitHub contributions in the last year' },
+  { v: String(github.publicRepos), k: 'Public repositories' },
+  { v: String(wins.length), k: 'Hackathons since 2024' },
+  { v: `${projects.length} + ${alsoBuilt.length}`, k: 'Projects: case studies + also built' },
+];
+---
+<Section id="stats">
+  <ul class="stats__nums">
+    {nums.map((n) => (
+      <li class="card num reveal">
+        <p class="num__v">{n.v}</p>
+        <p class="num__k">{n.k}</p>
+      </li>
+    ))}
+  </ul>
+  <div class="card heat">
+    <div class="heat__head">
+      <h3 class="label">Contributions on GitHub, <a href={site.github}>@{github.user}</a></h3>
+      <p class="mono muted heat__swipe" aria-hidden="true">Swipe for earlier days →</p>
+    </div>
+    <div class="heat__scroll" tabindex="0" role="region" aria-label="Contribution calendar, scrollable" data-heat-scroll>
+      <div role="img" aria-label={`${github.total} contributions from ${range}. Monthly totals follow in a table.`}>
+        <div class="heat__months mono" aria-hidden="true">{labels.map((l) => <span>{l}</span>)}</div>
+        <div class="heat__grid" aria-hidden="true">
+          {weeks.map((w) => (
+            <div class="wk">
+              {w.map((d) => d
+                ? <i class={d.level ? `l${d.level}` : undefined} title={`${d.count} contribution${d.count === 1 ? '' : 's'} on ${fmt(d.date)}`}></i>
+                : <i class="pad"></i>)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+    <div class="heat__foot mono">
+      <span>{range} · updated {fmt(github.fetchedAt)}</span>
+      <span class="legend" aria-hidden="true">Less <i></i><i></i><i></i><i></i><i></i> More</span>
+    </div>
+    <table class="sr-only">
+      <caption>GitHub contributions per month</caption>
+      <thead><tr><th scope="col">Month</th><th scope="col">Contributions</th></tr></thead>
+      <tbody>
+        {[...monthly].map(([m, c]) => <tr><th scope="row">{monthName(m)}</th><td>{c}</td></tr>)}
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<script>
+  // Start the calendar at the most recent week, and stagger the last columns' fade-in.
+  const box = document.querySelector<HTMLElement>('[data-heat-scroll]');
+  if (box) {
+    box.scrollLeft = box.scrollWidth;
+    box.querySelectorAll<HTMLElement>('.wk').forEach((w, i, all) => {
+      w.style.transitionDelay = `${Math.max(0, i - all.length + 30) * 18}ms`;
+    });
+  }
+</script>
