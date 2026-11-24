@@ -1,0 +1,14 @@
+{
+  "name": "Hardik Bhatia",
+  "short_name": "Hardik",
+  "description": "Full-Stack & AI Developer in Mumbai.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#0E0E0C",
+  "theme_color": "#0E0E0C",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
