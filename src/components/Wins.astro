@@ -1,0 +1,30 @@
+---
+import Section from './Section.astro';
+import { wins, alsoBuilt } from '../data/site';
+---
+<Section id="wins">
+  <ul class="wins">
+    {wins.map((w, i) => (
+      <li class={`card win stripped lift slide${i % 2 ? ' slide--late' : ''} strip-${(i % 5) + 1}`}>
+        <p class="win__year">{w.year}</p>
+        <h3 class="win__headline">{w.event}</h3>
+        <p class="win__fact">{w.fact}</p>
+      </li>
+    ))}
+  </ul>
+  <div class="also reveal">
+    <h3>Also built</h3>
+    <ul class="also__list">
+      {alsoBuilt.map((a) => (
+        <li>
+          <p class="also__name">{a.href ? <a href={a.href}>{a.title}<span class="sr-only"> on GitHub</span></a> : a.title}</p>
+          <div>
+            <p class="also__line">{a.line}</p>
+            <p class="mono muted">{a.stack}</p>
+          </div>
+          <p class="also__ctx mono">{a.context}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Section>
