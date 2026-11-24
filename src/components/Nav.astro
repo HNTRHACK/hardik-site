@@ -1,0 +1,69 @@
+---
+import { site, sections } from '../data/site';
+
+const { home = false } = Astro.props as { home?: boolean };
+const href = (id: string) => (home ? `#${id}` : `/#${id}`);
+---
+<header class="nav" data-nav>
+  <div class="wrap nav__inner">
+    <a class="nav__name" href={home ? '#top' : '/'}>{site.name}<span>Full-Stack & AI Developer</span></a>
+    <nav class="nav__links" aria-label="Sections">
+      <ul>
+        {sections.map((s) => <li><a class="nav__link" href={href(s.id)} data-section={s.id}>{s.label}</a></li>)}
+      </ul>
+    </nav>
+    <ul class="nav__social" aria-label="Profiles">
+      <li><a class="nav__link" href={site.github} rel="me">GitHub</a></li>
+      <li><a class="nav__link" href={site.linkedin} rel="me">LinkedIn</a></li>
+    </ul>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu" data-nav-toggle>Menu</button>
+  </div>
+  <div class="nav__menu" id="nav-menu" data-nav-menu>
+    <nav class="wrap" aria-label="Sections and profiles">
+      <ul>
+        {sections.map((s) => <li><a class="nav__link" href={href(s.id)} data-section={s.id}>{s.label}</a></li>)}
+        <li><a class="nav__link" href={site.github} rel="me">GitHub</a></li>
+        <li><a class="nav__link" href={site.linkedin} rel="me">LinkedIn</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('[data-nav]')!;
+  const toggle = nav.querySelector<HTMLButtonElement>('[data-nav-toggle]')!;
+  const menu = nav.querySelector<HTMLElement>('[data-nav-menu]')!;
+
+  const setOpen = (open: boolean) => {
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.textContent = open ? 'Close' : 'Menu';
+    menu.classList.toggle('is-open', open);
+  };
+  toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  menu.addEventListener('click', (e) => { if ((e.target as Element).closest('a')) setOpen(false); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menu.classList.contains('is-open')) { setOpen(false); toggle.focus(); }
+  });
+
+  const onScroll = () => nav.classList.toggle('is-scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true });
+  requestAnimationFrame(onScroll);
+
+  // Highlight the section currently in view.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-section]')];
+  const targets = [...new Set(links.map((a) => a.dataset.section!))]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => !!el);
+  if (targets.length) {
+    const visible = new Map<string, boolean>();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) visible.set(e.target.id, e.isIntersecting);
+      const current = targets.find((t) => visible.get(t.id))?.id;
+      for (const a of links) {
+        if (a.dataset.section === current) a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      }
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    targets.forEach((t) => io.observe(t));
+  }
+</script>
