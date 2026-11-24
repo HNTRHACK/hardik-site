@@ -1,0 +1,28 @@
+---
+import { Picture } from 'astro:assets';
+import Section from './Section.astro';
+import Cover from './Cover.astro';
+import { projects } from '../data/projects';
+---
+<Section id="work">
+  <ul class="work">
+    {projects.map((p, i) => (
+      <li class={`card wcard stripped lift reveal strip-${(i % 5) + 1}`}>
+        <div class="wcard__media">
+          {p.cover ? (
+            <Picture src={p.cover.src} alt={p.cover.alt} formats={['avif', 'webp']} widths={[400, 640, 960]} sizes="(min-width: 1440px) 430px, (min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw" />
+          ) : (
+            <Cover title={p.title} stack={p.stack.slice(0, 4)} />
+          )}
+        </div>
+        <div class="wcard__body">
+          <p class="wcard__meta mono"><span>{p.event}</span><span>{p.year}</span></p>
+          <h3 class="wcard__title"><a href={`/work/${p.slug}/`}>{p.title}</a></h3>
+          <p class="wcard__line">{p.oneLiner}</p>
+          <p class="wcard__role">{p.role}</p>
+          <div class="tags">{p.stack.slice(0, 4).map((s) => <span class="tag">{s}</span>)}</div>
+        </div>
+      </li>
+    ))}
+  </ul>
+</Section>

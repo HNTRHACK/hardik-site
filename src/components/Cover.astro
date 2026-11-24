@@ -1,0 +1,11 @@
+---
+// A designed title card for projects without a screenshot. It is plainly a
+// title card (name + stack on colour bands), never a fake screenshot.
+interface Props { title: string; stack: string[] }
+const { title, stack } = Astro.props;
+---
+<div class="cover" role="img" aria-label={`${title} title card. Stack: ${stack.join(', ')}`}>
+  <div class="cover__bands" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+  <span class="cover__name" aria-hidden="true">{title}</span>
+  <span class="cover__stack mono" aria-hidden="true">{stack.join(' · ')}</span>
+</div>
