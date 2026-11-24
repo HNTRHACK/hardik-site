@@ -1,0 +1,23 @@
+---
+import { Picture } from 'astro:assets';
+import Section from './Section.astro';
+import Shuffle from './Shuffle.astro';
+import laneImg from '../assets/fun/lane.jpg';
+import { lane, offTheClock, site } from '../data/site';
+
+const cards = offTheClock.cards.filter((c) => c.body.trim());
+---
+<Section id="fun">
+  <a class="card lanecard lift slide" href={site.lane}>
+    <div class="lanecard__media">
+      <Picture src={laneImg} alt="An auto-rickshaw on a Mumbai street at dusk, passing a billboard reading Hardik Bhatia, Full-Stack & AI Developer, and a ChaiPay chai stall" formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes="(min-width: 1024px) 60vw, 100vw" />
+    </div>
+    <div class="lanecard__body">
+      <p class="mono muted">{lane.title}</p>
+      <p class="lanecard__cta">Drive through my lane <span aria-hidden="true">→</span></p>
+      <p class="lanecard__line">{lane.line}</p>
+      <div class="tags">{lane.stack.map((s) => <span class="tag">{s}</span>)}</div>
+    </div>
+  </a>
+  {offTheClock.show && cards.length > 0 && <Shuffle cards={cards} />}
+</Section>
