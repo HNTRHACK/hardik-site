@@ -1,0 +1,54 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Section from './Section.astro';
+import { about } from '../data/site';
+
+// Drop a real photo at src/assets/me/portrait.(jpg|png|webp) and it replaces the monogram.
+const found = import.meta.glob<{ default: ImageMetadata }>('../assets/me/portrait.{jpg,jpeg,png,webp,avif}', { eager: true });
+const portrait = Object.values(found)[0]?.default;
+---
+<Section id="about">
+  <div class="about">
+    <div class="about__top">
+      <div class="about__bio reveal">
+        {about.bio.map((p) => <p>{p}</p>)}
+      </div>
+      {portrait ? (
+        <div class="portrait reveal">
+          <Image src={portrait} alt="Hardik Bhatia" widths={[240, 480]} sizes="240px" />
+        </div>
+      ) : (
+        <div class="portrait monogram reveal" aria-hidden="true"><span>HB</span></div>
+      )}
+    </div>
+    <div class="facts">
+      <div class="card fact reveal">
+        <h3>Now</h3>
+        <ul class="now">
+          {about.now.map((n) => <li>{n}</li>)}
+        </ul>
+      </div>
+      <div class="card fact reveal">
+        <h3>Education</h3>
+        <ul>
+          {about.education.map((e) => (
+            <li>
+              <p class="mono muted">{e.period}</p>
+              <p class="edu__title">{e.title}</p>
+              <p class="edu__org">{e.org}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    <dl class="skills reveal" aria-label="Skills">
+      {about.skills.map((g) => (
+        <div class="skills__row">
+          <dt>{g.group}</dt>
+          <dd>{g.items.join(', ')}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</Section>

@@ -1,0 +1,20 @@
+---
+import Section from './Section.astro';
+import { experience } from '../data/site';
+---
+<Section id="experience">
+  <ol class="exp">
+    {experience.map((x) => (
+      <li class="card exp__item lift reveal">
+        <span class="exp__initial" aria-hidden="true">{x.initial}</span>
+        <div class="exp__top">
+          <h3 class="exp__role">{x.role}</h3>
+          <p class="mono muted">{x.period}</p>
+        </div>
+        <p class="exp__org">{x.org}</p>
+        <p class="exp__impact">{x.impact}</p>
+        <div class="tags">{x.tags.map((t) => <span class="tag">{t}</span>)}</div>
+      </li>
+    ))}
+  </ol>
+</Section>
