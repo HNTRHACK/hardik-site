@@ -1,0 +1,21 @@
+<script>
+  // Fade content up once as it scrolls into view. Only elements still below the
+  // fold are hidden first, so nothing on screen ever blinks. Skipped entirely
+  // when the visitor prefers reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    }, { rootMargin: '0px 0px -8% 0px' });
+    requestAnimationFrame(() => {
+      for (const el of document.querySelectorAll<HTMLElement>('.reveal, .heat')) {
+        if (el.getBoundingClientRect().top < innerHeight) continue;
+        el.classList.add('pre');
+        io.observe(el);
+      }
+    });
+  }
+</script>
