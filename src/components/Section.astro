@@ -1,0 +1,23 @@
+---
+import { sections, summaries, type SectionId } from '../data/site';
+
+interface Props { id: SectionId; title?: string }
+const { id, title } = Astro.props;
+const i = sections.findIndex((s) => s.id === id);
+const pad = (n: number) => String(n).padStart(2, '0');
+const heading = title ?? sections[i]!.label;
+---
+<section class="section wrap" id={id} aria-labelledby={`${id}-title`}>
+  <div class="grid">
+    <header class="section__head">
+      <div class="section__sticky reveal">
+        <p class="section__count mono"><span class="sr-only">Section </span>{pad(i + 1)} / {pad(sections.length)}</p>
+        <h2 class="section__title" id={`${id}-title`}>{heading}</h2>
+        <p class="section__summary">{summaries[id]}</p>
+      </div>
+    </header>
+    <div class="section__body">
+      <slot />
+    </div>
+  </div>
+</section>
