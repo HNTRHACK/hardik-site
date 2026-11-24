@@ -1,0 +1,70 @@
+---
+import { existsSync } from 'node:fs';
+import Section from './Section.astro';
+import { site, sayHi } from '../data/site';
+
+const hasResume = existsSync('public/resume.pdf');
+---
+<Section id="hi">
+  <form class="hi__form reveal" action={`mailto:${site.email}`} method="get" enctype="text/plain" novalidate data-hi>
+    <p class="hi__sentence">
+      Hi Hardik, I’m
+      <span class="blank"><label class="sr-only" for="hi-name">Your name</label><input id="hi-name" name="name" type="text" autocomplete="name" placeholder="your name" required aria-describedby="hi-error" /></span>
+      from
+      <span class="nowrap"><span class="blank blank--wide"><label class="sr-only" for="hi-org">Your company or college</label><input id="hi-org" name="org" type="text" autocomplete="organization" placeholder="company or college" /></span>.</span>
+      I’d like to talk about
+      <span class="nowrap"><span class="blank"><label class="sr-only" for="hi-topic">What you’d like to talk about</label><select id="hi-topic" name="topic">
+        {sayHi.topics.map((t) => <option value={t}>{t}</option>)}
+      </select></span>.</span>
+    </p>
+    <div class="hi__actions">
+      <button class="pill pill--ink" type="submit">Write the email</button>
+      <p class="hi__hint">Opens your mail app with this filled in.</p>
+    </div>
+    <p class="hi__error" id="hi-error" role="alert"></p>
+  </form>
+  <div class="hi__links">
+    <button class="pill" type="button" data-copy={site.email}>Copy email <span class="mono muted">{site.email}</span></button>
+    <a class="pill" href={site.github} rel="me">GitHub</a>
+    <a class="pill" href={site.linkedin} rel="me">LinkedIn</a>
+    {hasResume && <a class="pill" href="/resume.pdf">Résumé (PDF)</a>}
+  </div>
+  <p class="copy__status" aria-live="polite" data-copy-status></p>
+</Section>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-hi]');
+  if (form) {
+    const error = form.querySelector<HTMLElement>('#hi-error')!;
+    const nameInput = form.querySelector<HTMLInputElement>('#hi-name')!;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const name = String(data.get('name') ?? '').trim();
+      const org = String(data.get('org') ?? '').trim();
+      const topic = String(data.get('topic') ?? '');
+      if (!name) {
+        error.textContent = 'Add your name first.';
+        nameInput.setAttribute('aria-invalid', 'true');
+        nameInput.focus();
+        return;
+      }
+      error.textContent = '';
+      nameInput.removeAttribute('aria-invalid');
+      const body = `Hi Hardik, I'm ${name}${org ? ` from ${org}` : ''}. I'd like to talk about ${topic}.\n\n`;
+      location.href = `${form.getAttribute('action')}?subject=${encodeURIComponent(`Hello from ${name}`)}&body=${encodeURIComponent(body)}`;
+    });
+  }
+
+  const copy = document.querySelector<HTMLButtonElement>('[data-copy]');
+  const status = document.querySelector<HTMLElement>('[data-copy-status]');
+  copy?.addEventListener('click', async () => {
+    const email = copy.dataset.copy!;
+    try {
+      await navigator.clipboard.writeText(email);
+      if (status) status.textContent = `Copied ${email}`;
+    } catch {
+      if (status) status.textContent = `Couldn’t copy. The address is ${email}`;
+    }
+  });
+</script>
