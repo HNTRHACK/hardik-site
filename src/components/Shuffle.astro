@@ -1,0 +1,85 @@
+---
+interface Props { cards: { label: string; body: string }[] }
+const { cards } = Astro.props;
+---
+<div class="shuffle">
+  <div class="shuffle__head">
+    <h3 id="otc-title">Off the clock</h3>
+    <p class="label" id="otc-help">Shuffle freely. Drag a card, or focus one and use the arrow keys.</p>
+  </div>
+  <ul class="shuffle__list" data-shuffle aria-labelledby="otc-title" aria-describedby="otc-help">
+    {cards.map((c, i) => (
+      <li class={`card shuffle__card stripped strip-${(i % 5) + 1}`} tabindex="0" aria-roledescription="movable card" data-label={c.label}>
+        <p class="label">{c.label}</p>
+        <p>{c.body}</p>
+      </li>
+    ))}
+  </ul>
+  <p class="sr-only" aria-live="polite" data-shuffle-status></p>
+</div>
+
+<script>
+  const list = document.querySelector<HTMLUListElement>('[data-shuffle]');
+  const status = document.querySelector<HTMLElement>('[data-shuffle-status]');
+  if (list && status) {
+    const cards = () => [...list.children] as HTMLElement[];
+    const announce = (el: HTMLElement) => {
+      status.textContent = `${el.dataset.label} moved to position ${cards().indexOf(el) + 1} of ${cards().length}.`;
+    };
+
+    // Keyboard: arrow keys move the focused card one place.
+    list.addEventListener('keydown', (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('.shuffle__card');
+      if (!el) return;
+      const back = e.key === 'ArrowLeft' || e.key === 'ArrowUp';
+      const fwd = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+      if (!back && !fwd) return;
+      e.preventDefault();
+      if (back && el.previousElementSibling) list.insertBefore(el, el.previousElementSibling);
+      else if (fwd && el.nextElementSibling) list.insertBefore(el.nextElementSibling, el);
+      else return;
+      el.focus();
+      announce(el);
+    });
+
+    // Pointer: drag a card over another to take its place.
+    let drag: { el: HTMLElement; id: number; dx: number; dy: number } | null = null;
+    const place = (x: number, y: number) => {
+      if (!drag) return;
+      drag.el.style.transform = 'none';
+      const r = drag.el.getBoundingClientRect();
+      drag.el.style.transform = `translate(${x - drag.dx - r.left}px, ${y - drag.dy - r.top}px)`;
+    };
+    list.addEventListener('pointerdown', (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>('.shuffle__card');
+      if (!el || e.button !== 0) return;
+      const r = el.getBoundingClientRect();
+      drag = { el, id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top };
+      el.classList.add('is-dragging');
+    });
+    // Listen on window: reordering the dragged card in the DOM drops pointer capture.
+    addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dragged = drag.el;
+      const over = cards().find((c) => {
+        if (c === dragged) return false;
+        const r = c.getBoundingClientRect();
+        return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom;
+      });
+      if (over) {
+        const all = cards();
+        list.insertBefore(dragged, all.indexOf(over) > all.indexOf(dragged) ? over.nextElementSibling : over);
+      }
+      place(e.clientX, e.clientY);
+    });
+    const end = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag.el.classList.remove('is-dragging');
+      drag.el.style.transform = '';
+      announce(drag.el);
+      drag = null;
+    };
+    addEventListener('pointerup', end);
+    addEventListener('pointercancel', end);
+  }
+</script>
